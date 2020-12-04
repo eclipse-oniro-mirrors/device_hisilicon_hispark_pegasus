@@ -24,7 +24,7 @@ static_library("wifiservice") {
     "//foundation/distributedschedule/interfaces/kits/samgr_lite/samgr",
   ]
 }
-if (ohos_kernel_type == "liteos_riscv") {
+if (ohos_kernel_type == "liteos_m") {
   ndk_lib("wifiservice_ndk") {
     deps = [ ":wifiservice" ]
 
