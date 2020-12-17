@@ -21,7 +21,7 @@ lite_component("sdk") {
   features = []
 
   deps = [
-    "//kernel/liteos_m/kal",
     "//third_party/cJSON:cjson_static",
+    "//vendor/hisi/hi3861/hi3861_adapter/kal",
   ]
 }
