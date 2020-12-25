@@ -127,10 +127,10 @@ hi_u32 hi_gpio_get_input_val(hi_gpio_idx id, hi_gpio_value *val);
 
 /**
 * @ingroup  iot_gpio
-* @brief  Obtains the input level of a single I/O pin.CNcomment:获取某个IO管脚输出电平状态。CNend
+* @brief  Obtains the output level of a single I/O pin.CNcomment:获取某个IO管脚输出电平状态。CNend
 *
 * @par 描述:
-*           Obtains the input level of a single I/O pin.CNcomment:获取某个IO管脚输出电平状态。CNend
+*           Obtains the output level of a single I/O pin.CNcomment:获取某个IO管脚输出电平状态。CNend
 *
 * @attention None
 * @param  id  [IN]  type #hi_gpio_idx，I/O index.CNcomment:GPIO索引。CNend
