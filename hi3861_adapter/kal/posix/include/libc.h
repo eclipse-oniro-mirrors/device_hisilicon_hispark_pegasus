@@ -29,8 +29,8 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef VERSION_H_
-#define VERSION_H_
+#ifndef LIBC_H_
+#define LIBC_H_
 
 #ifdef __cplusplus
 extern "C" {
@@ -43,4 +43,4 @@ int libc_get_version(void);
 }
 #endif
 
-#endif // VERSION_H_
+#endif // LIBC_H_

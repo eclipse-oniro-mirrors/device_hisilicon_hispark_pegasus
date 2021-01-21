@@ -4,10 +4,10 @@ import("//build/lite/config/component/lite_component.gni")
 static_library("posix") {
   sources = [
     "src/file.c",
+    "src/libc.c",
     "src/pthread.c",
     "src/pthread_attr.c",
     "src/time.c",
-    "src/version.c",
   ]
 
   include_dirs = [ "include" ]
