@@ -29,22 +29,21 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <version.h>
+#ifndef _KAL_LIMITS_H
+#define _KAL_LIMITS_H
 
-/**
- * get libc version string.
- * @return libc version string. the format is <major>.<minor>.<patch>[-<platform>[-<desc>]]
- */
-const char *libc_get_version_string(void)
-{
-    return LIBC_VERSION_STR;
-}
+#include_next <limits.h>
 
-/**
- * get libc version code.
- * @return libc version code. the format is 0x00XXYYZZ, XX is major version, YY is minor version and ZZ is patch version
- */
-int libc_get_version(void)
-{
-    return LIBC_VERSION_NUM;
-}
+#ifdef __LITEOS__
+
+#ifndef LOS_TASK_MIN_STACK_SIZE
+#define LOS_TASK_MIN_STACK_SIZE LOSCFG_BASE_CORE_TSK_MIN_STACK_SIZE
+#endif
+
+#ifndef PTHREAD_STACK_MIN
+#define PTHREAD_STACK_MIN LOSCFG_BASE_CORE_TSK_MIN_STACK_SIZE
+#endif
+
+#endif
+
+#endif

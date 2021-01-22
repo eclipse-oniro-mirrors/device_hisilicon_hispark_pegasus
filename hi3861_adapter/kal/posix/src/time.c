@@ -29,6 +29,7 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <stdint.h>
 #include <errno.h>
 #include <time.h>
 #include <signal.h>
@@ -87,19 +88,38 @@ STATIC INLINE VOID OsTick2TimeSpec(struct timespec *tp, UINT32 tick)
     tp->tv_nsec = (long)(ns % OS_SYS_NS_PER_SECOND);
 }
 
-int nanosleep(const struct timespec *req, struct timespec *rem)
+int nanosleep(const struct timespec *rqtp, struct timespec *rmtp)
 {
-    UINT64 us = (UINT64)req->tv_sec * OS_SYS_US_PER_SECOND + (req->tv_nsec + OS_SYS_NS_PER_US - 1) / OS_SYS_NS_PER_US;
-    if (us > 0xFFFFFFFFU) {
+    UINT64 nseconds;
+    UINT64 tick;
+    UINT32 ret;
+    const UINT32 nsPerTick = OS_SYS_NS_PER_SECOND / LOSCFG_BASE_CORE_TICK_PER_SECOND;
+
+    if (!ValidTimeSpec(rqtp)) {
         errno = EINVAL;
         return -1;
     }
-    if (usleep(us) == 0) {
-        if (rem) {
-            rem->tv_sec = rem->tv_nsec = 0;
+
+    nseconds = (UINT64)rqtp->tv_sec * OS_SYS_NS_PER_SECOND + rqtp->tv_nsec;
+
+    tick = (nseconds + nsPerTick - 1) / nsPerTick; // Round up for ticks
+
+    if (tick >= UINT32_MAX) {
+        errno = EINVAL;
+        return -1;
+    }
+
+    /* PS: skip the first tick because it is NOT a full tick. */
+    ret = LOS_TaskDelay(tick ? (UINT32)(tick + 1) : 0);
+    if (ret == LOS_OK || ret == LOS_ERRNO_TSK_YIELD_NOT_ENOUGH_TASK) {
+        if (rmtp) {
+            rmtp->tv_sec = rmtp->tv_nsec = 0;
         }
         return 0;
     }
+
+    /* sleep in interrupt context or in task sched lock state */
+    errno = EPERM;
     return -1;
 }
 

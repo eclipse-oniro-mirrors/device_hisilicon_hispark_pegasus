@@ -41,7 +41,7 @@
 /* this is just an assertion: LOS_TASK_ARG_NUM >= 4 */
 typedef char NULNAM[-!((LOS_TASK_ARG_NUM * 4) >= PTHREAD_NAMELEN)];
 
-static void *_pthread_entry(UINT32 param1, UINT32 param2, UINT32 param3, UINT32 param4)
+static void *PthreadEntry(UINT32 param1, UINT32 param2, UINT32 param3, UINT32 param4)
 {
     void *(*startRoutine)(void *) = (void *)(UINTPTR)param1;
     void *param = (void *)(UINTPTR)param2;
@@ -60,6 +60,12 @@ static void *_pthread_entry(UINT32 param1, UINT32 param2, UINT32 param3, UINT32 
     free(tmp);
 
     return startRoutine(param);
+}
+
+static inline int IsPthread(pthread_t thread)
+{
+    return ((UINT32)thread <= LOSCFG_BASE_CORE_TSK_LIMIT) &&
+           (OS_TCB_FROM_TID((UINT32)thread)->taskEntry == PthreadEntry);
 }
 
 int pthread_create(pthread_t *thread, const pthread_attr_t *attr,
@@ -92,7 +98,7 @@ int pthread_create(pthread_t *thread, const pthread_attr_t *attr,
         return ENOMEM;
     }
 
-    taskInitParam.pfnTaskEntry = _pthread_entry;
+    taskInitParam.pfnTaskEntry = PthreadEntry;
     taskInitParam.auwArgs[0]   = (UINT32)(UINTPTR)startRoutine;
     taskInitParam.auwArgs[1]   = (UINT32)(UINTPTR)arg;
 
@@ -105,12 +111,13 @@ int pthread_create(pthread_t *thread, const pthread_attr_t *attr,
     (void)sprintf_s(taskInitParam.pcName, PTHREAD_NAMELEN, "pthread%u", taskID);
 
     *thread = (pthread_t)taskID;
-    return ENOERR;
+    return 0;
 }
 
 int pthread_setschedparam(pthread_t thread, int policy, const struct sched_param *param)
 {
-    if ((param == NULL) || (param->sched_priority > OS_TASK_PRIORITY_LOWEST)) {
+    if ((param == NULL) || (param->sched_priority < OS_TASK_PRIORITY_HIGHEST) ||
+        (param->sched_priority >= OS_TASK_PRIORITY_LOWEST) || !IsPthread(thread)) {
         return EINVAL;
     }
 
@@ -123,14 +130,14 @@ int pthread_setschedparam(pthread_t thread, int policy, const struct sched_param
         return EINVAL;
     }
 
-    return ENOERR;
+    return 0;
 }
 
 int pthread_getschedparam(pthread_t thread, int *policy, struct sched_param *param)
 {
     UINT32 prio;
 
-    if ((policy == NULL) || (param == NULL)) {
+    if ((policy == NULL) || (param == NULL) || !IsPthread(thread)) {
         return EINVAL;
     }
 
@@ -141,7 +148,7 @@ int pthread_getschedparam(pthread_t thread, int *policy, struct sched_param *par
 
     *policy = SCHED_RR;
     param->sched_priority = prio;
-    return ENOERR;
+    return 0;
 }
 
 pthread_t pthread_self(void)
@@ -151,11 +158,14 @@ pthread_t pthread_self(void)
 
 int pthread_cancel(pthread_t thread)
 {
-    (void)thread;
+    if (!IsPthread(thread)) {
+        return EINVAL;
+    }
+
     return ENOSYS;
 }
 
-static void *void_task(UINT32 param1, UINT32 param2, UINT32 param3, UINT32 param4)
+static void *VoidTask(UINT32 param1, UINT32 param2, UINT32 param3, UINT32 param4)
 {
     (void)param1;
     (void)param2;
@@ -164,13 +174,13 @@ static void *void_task(UINT32 param1, UINT32 param2, UINT32 param3, UINT32 param
     return 0;
 }
 
-static void cleanup_task_resource(void)
+static void CleanupTaskResource(void)
 {
     TSK_INIT_PARAM_S taskInitParam = {0};
     UINT32 taskID;
 
     taskInitParam.pcName       = "void";
-    taskInitParam.pfnTaskEntry = void_task;
+    taskInitParam.pfnTaskEntry = VoidTask;
     taskInitParam.usTaskPrio = LOSCFG_BASE_CORE_TSK_DEFAULT_PRIO;
     taskInitParam.uwStackSize = LOSCFG_BASE_CORE_TSK_MIN_STACK_SIZE;
 
@@ -180,6 +190,10 @@ static void cleanup_task_resource(void)
 int pthread_join(pthread_t thread, void **retval)
 {
     UINT32 taskStatus;
+
+    if (!IsPthread(thread)) {
+        return EINVAL;
+    }
 
     if (retval) {
         /* retrieve thread exit code is not supported currently */
@@ -194,13 +208,16 @@ int pthread_join(pthread_t thread, void **retval)
         usleep(10000);
     }
 
-    cleanup_task_resource();
+    CleanupTaskResource();
     return 0;
 }
 
 int pthread_detach(pthread_t thread)
 {
-    (void)thread;
+    if (!IsPthread(thread)) {
+        return EINVAL;
+    }
+
     return ENOSYS;
 }
 
@@ -213,7 +230,7 @@ void pthread_exit(void *retVal)
 int pthread_setname_np(pthread_t thread, const char *name)
 {
     char *taskName = LOS_TaskNameGet((UINT32)thread);
-    if (taskName == NULL) {
+    if (taskName == NULL || !IsPthread(thread)) {
         return EINVAL;
     }
     if (strnlen(name, PTHREAD_NAMELEN) >= PTHREAD_NAMELEN) {
@@ -228,7 +245,7 @@ int pthread_getname_np(pthread_t thread, char *buf, size_t buflen)
     int ret;
 
     const char *name = LOS_TaskNameGet((UINT32)thread);
-    if (name == NULL) {
+    if (name == NULL || !IsPthread(thread)) {
         return EINVAL;
     }
     if (buflen > strlen(name)) {
