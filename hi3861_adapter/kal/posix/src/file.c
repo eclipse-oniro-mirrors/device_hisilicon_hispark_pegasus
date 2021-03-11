@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 2013-2019, Huawei Technologies Co., Ltd. All rights reserved.
- * Copyright (c) 2020, Huawei Device Co., Ltd. All rights reserved.
+ * Copyright (c) 2013-2019 Huawei Technologies Co., Ltd. All rights reserved.
+ * Copyright (c) 2020-2021 Huawei Device Co., Ltd. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without modification,
  * are permitted provided that the following conditions are met:
@@ -71,6 +71,9 @@ static size_t GetCanonicalPath(const char *cwd, const char *path, char *buf, siz
     }
 
     size_t tmpLen = strlen(cwd) + strlen(path) + 4; // three '/' and one '\0'
+    if (tmpLen <= 0) {
+        return 0;
+    }
     char *tmpBuf = (char *)malloc(tmpLen);
     if (tmpBuf == NULL) {
         return 0;
@@ -134,11 +137,15 @@ static size_t GetCanonicalPath(const char *cwd, const char *path, char *buf, siz
 int open(const char *file, int oflag, ...)
 {
     unsigned flags = O_RDONLY | O_WRONLY | O_RDWR | O_APPEND | O_CREAT | O_LARGEFILE | O_TRUNC | O_EXCL | O_DIRECTORY;
-    if ((unsigned)oflag & ~flags) {
+    if (((unsigned)oflag & ~flags) || (file == NULL)) {
         errno = EINVAL;
         return -1;
     }
     size_t pathLen = strlen(file) + 1;
+    if (pathLen <= 0) {
+        errno = EINVAL;
+        return -1;
+    }
     char *canonicalPath = (char *)malloc(pathLen);
     if (!canonicalPath) {
         errno = ENOMEM;

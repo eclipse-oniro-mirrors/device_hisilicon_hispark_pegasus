@@ -19,7 +19,7 @@
 
 #include "cmsis_os.h"
 #include "common.h"
-#include "hos_init.h"
+#include "ohos_init.h"
 
 #include "wifi_hotspot_config.h"
 
@@ -42,7 +42,7 @@ WifiSecurityType HiSecToHoSec(hi_wifi_auth_mode mode)
             return WIFI_SEC_TYPE_WEP;
         case HI_WIFI_SECURITY_WPAPSK_WPA2PSK_MIX:
             return WIFI_SEC_TYPE_PSK;
-        case HI_WIFI_SECURITY_SAE:
+        case HI_WIFI_SECURITY_WPA3_WPA2_PSK_MIX:
             return WIFI_SEC_TYPE_SAE;
         default:
             return WIFI_SEC_TYPE_INVALID;
@@ -59,7 +59,7 @@ hi_wifi_auth_mode HoSecToHiSec(WifiSecurityType type)
         case WIFI_SEC_TYPE_PSK:
             return HI_WIFI_SECURITY_WPAPSK_WPA2PSK_MIX;
         case WIFI_SEC_TYPE_SAE:
-            return HI_WIFI_SECURITY_SAE;
+            return HI_WIFI_SECURITY_WPA3_WPA2_PSK_MIX;
         default:
             return HI_WIFI_SECURITY_UNKNOWN;
     }

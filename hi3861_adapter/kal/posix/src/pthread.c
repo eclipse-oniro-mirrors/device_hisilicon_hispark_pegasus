@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 2013-2019, Huawei Technologies Co., Ltd. All rights reserved.
- * Copyright (c) 2020, Huawei Device Co., Ltd. All rights reserved.
+ * Copyright (c) 2013-2019 Huawei Technologies Co., Ltd. All rights reserved.
+ * Copyright (c) 2020-2021 Huawei Device Co., Ltd. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without modification,
  * are permitted provided that the following conditions are met:
@@ -102,13 +102,15 @@ int pthread_create(pthread_t *thread, const pthread_attr_t *attr,
     taskInitParam.auwArgs[0]   = (UINT32)(UINTPTR)startRoutine;
     taskInitParam.auwArgs[1]   = (UINT32)(UINTPTR)arg;
 
-    if (LOS_TaskCreate(&taskID, &taskInitParam) != LOS_OK) {
+    if (LOS_TaskCreateOnly(&taskID, &taskInitParam) != LOS_OK) {
         free(taskInitParam.pcName);
         return EINVAL;
     }
 
     /* set pthread default name */
     (void)sprintf_s(taskInitParam.pcName, PTHREAD_NAMELEN, "pthread%u", taskID);
+
+    (void)LOS_TaskResume(taskID);
 
     *thread = (pthread_t)taskID;
     return 0;
@@ -236,7 +238,9 @@ int pthread_setname_np(pthread_t thread, const char *name)
     if (strnlen(name, PTHREAD_NAMELEN) >= PTHREAD_NAMELEN) {
         return ERANGE;
     }
-    (void)strcpy_s(taskName, PTHREAD_NAMELEN, name);
+    if (strcpy_s(taskName, PTHREAD_NAMELEN, name) != 0) {
+        return ERANGE;
+    }
     return 0;
 }
 

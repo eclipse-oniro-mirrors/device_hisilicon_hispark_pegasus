@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 2013-2019, Huawei Technologies Co., Ltd. All rights reserved.
- * Copyright (c) 2020, Huawei Device Co., Ltd. All rights reserved.
+ * Copyright (c) 2013-2019 Huawei Technologies Co., Ltd. All rights reserved.
+ * Copyright (c) 2020-2021 Huawei Device Co., Ltd. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without modification,
  * are permitted provided that the following conditions are met:
@@ -34,16 +34,10 @@
 
 #include_next <limits.h>
 
-#ifdef __LITEOS__
-
-#ifndef LOS_TASK_MIN_STACK_SIZE
-#define LOS_TASK_MIN_STACK_SIZE LOSCFG_BASE_CORE_TSK_MIN_STACK_SIZE
-#endif
-
 #ifndef PTHREAD_STACK_MIN
+#ifdef __LITEOS__
 #define PTHREAD_STACK_MIN LOSCFG_BASE_CORE_TSK_MIN_STACK_SIZE
 #endif
-
 #endif
 
 #endif

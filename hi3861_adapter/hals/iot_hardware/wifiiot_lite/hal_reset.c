@@ -13,10 +13,10 @@
  * limitations under the License.
  */
 
-#include "hal_reset.h"
+#include "reset.h"
 #include "hi_reset.h"
 
-void HalRebootDevice(HalRebootCause cause)
+void RebootDevice(unsigned int cause)
 {
     hi_hard_reboot(cause);
 }

@@ -13,15 +13,15 @@
  * limitations under the License.
  */
 
-#include "hal_lowpower.h"
+#include "lowpower.h"
 #include "hi_lowpower.h"
 
-unsigned int HalLpcInit(void)
+unsigned int LpcInit(void)
 {
     return hi_lpc_init();
 }
 
-unsigned int HalLpcSetType(HalLpcType type)
+unsigned int LpcSetType(LpcType type)
 {
     return hi_lpc_set_type(type);
 }
