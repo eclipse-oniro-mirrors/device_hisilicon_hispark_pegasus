@@ -106,7 +106,7 @@ device/hisilicon/hispark_pegasus/sdk_liteos
 
 ## 相关仓<a name="section1371113476307"></a>
 
-**hmf/device/hisilicon/hispark\_pegasus**
+**device/hisilicon/hispark\_pegasus**
 
-hmf/vendor/hisilicon
+vendor/hisilicon
 
