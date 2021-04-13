@@ -15,7 +15,7 @@ HiSpark\_pegasus（Hi3861V100）是一款高度集成的2.4GHz WiFi SoC芯片，
 **图 1**  系统架构图<a name="fig4460722185514"></a>  
 
 
-![](figures/zh-cn_image_0000001084042234.png)
+![](figures/zh-cn_image_0000001086800826.png)
 
 该框架可以分为以下几个层次：
 
