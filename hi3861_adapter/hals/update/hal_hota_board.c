@@ -53,7 +53,7 @@ typedef enum {
     PARTITION_MAX
 } HotaPartition;
 
-static const ComponentTableInfo g_componentTable[PARTITION_MAX] = {
+static const ComponentTableInfo g_componentTable[] = {
     { PARTITION_PASS_THROUGH, "", "/sdcard/update/ota_pkg_pass_through.bin", 0},
     { PARTITION_INFO_COMP, "", "/sdcard/update/infocomp.bin", 0},
     { PARTITION_BOOTLOADER, "bootloader", "/sdcard/update/u-boot.bin", 0},
@@ -164,17 +164,21 @@ unsigned char *HotaHalGetPubKey(unsigned int *length)
 
 int HotaHalGetUpdateAbility(void)
 {
-    return ABILITY_AB_PART_INSTALL;
+    return ABILITY_PKG_SEARCH | ABILITY_PKG_DLOAD;
 }
 
 int HotaHalGetOtaPkgPath(char *path, int len)
 {
+    int ret = strcpy_s(path, len ,"/sdcard");
+    if (ret != 0) {
+        return OHOS_FAILURE;
+    }
     return OHOS_SUCCESS;
 }
 
 int HotaHalIsDeviceCanReboot(void)
 {
-    return OHOS_SUCCESS;
+    return 1;
 }
 
 int HotaHalGetMetaData(UpdateMetaData *metaData)
@@ -183,6 +187,16 @@ int HotaHalGetMetaData(UpdateMetaData *metaData)
 }
 
 int HotaHalSetMetaData(UpdateMetaData *metaData)
+{
+    return OHOS_SUCCESS;
+}
+
+int HotaHalRebootAndCleanUserData(void)
+{
+    return OHOS_SUCCESS;
+}
+
+int HotaHalRebootAndCleanCache(void)
 {
     return OHOS_SUCCESS;
 }
