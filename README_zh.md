@@ -79,9 +79,9 @@ device/hisilicon/hispark_pegasus/sdk_liteos
 ├── build.sh            # 启动编译脚本，同时支持“sh build.sh menuconfig”进行客制化配置。
 ├── components          # SDK平台相关的组件
 ├── config              # SDK系统配置文件。
-├── config.gni          # 支持HarmonyOS配置文件。
+├── config.gni          # 支持OpenHarmony配置文件。
 ├── factory.mk          # 厂测版本编译脚本。
-├── hm_build.sh         # 适配HarmonyOS构建脚本。
+├── hm_build.sh         # 适配OpenHarmony构建脚本。
 ├── include             # API头文件存放目录。
 ├── license             # SDK开源license声明
 ├── Makefile            # 支持make编译，使用“make”或“make all”启动编译。
