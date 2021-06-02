@@ -23,6 +23,7 @@
 #include "lwip/netifapi.h"
 #include "wifi_device_util.h"
 #include "wifi_hotspot_config.h"
+#include "utils_file.h"
 
 #define WIFI_RECONN_POLICY_ENABLE        1
 #define WIFI_RECONN_POLICY_TIMEOUT       0xFFFF
@@ -31,6 +32,9 @@
 #define WIFI_DISCONNECT_REASON_NO_AP     1
 #define WIFI_DEFAULT_KEY_FOR_PSK    "wifipskmode"
 #define WLAN_STA_NAME "wlan0"
+#define WIFI_FILE "/usrdata/hilink/wifi.cfg"
+#define WIFI_FILE_EXIST 1
+#define WIFI_FILE_UNEXIST 0
 
 static int g_wifiStaStatus = WIFI_STA_NOT_ACTIVE;
 static WifiDeviceConfig g_wifiConfigs[WIFI_MAX_CONFIG_SIZE] = {
@@ -39,6 +43,91 @@ static WifiDeviceConfig g_wifiConfigs[WIFI_MAX_CONFIG_SIZE] = {
 static WifiEvent* g_wifiEvents[WIFI_MAX_EVENT_SIZE] = {0};
 static int g_connectState = WIFI_STATE_NOT_AVALIABLE;
 static int g_networkId = -1;
+static bool g_networkConfigReadFlag = false;
+static int g_isNetworkConfigExist = WIFI_FILE_UNEXIST;
+
+static bool IsFileExist(const char* path)
+{
+    if (path == NULL) {
+        return false;
+    }
+    int32_t fd = UtilsFileOpen(path, O_RDONLY_FS, 0);
+    if (fd < 0) {
+        return false;
+    }
+    (void)UtilsFileClose(fd);
+    return true;
+}
+
+static int WriteNetworkConfig(const unsigned char *buf, unsigned int len)
+{
+    int fd;
+
+    if (buf == 0) {
+        return ERROR_WIFI_UNKNOWN;
+    }
+
+    fd = UtilsFileOpen(WIFI_FILE, O_RDWR_FS | O_CREAT_FS | O_TRUNC_FS, 0);
+    if (fd < 0) {
+        return ERROR_WIFI_UNKNOWN;
+    }
+
+    if (UtilsFileWrite(fd, (const char *)buf, len) < 0) {
+        UtilsFileClose(fd);
+        return ERROR_WIFI_UNKNOWN;
+    }
+    UtilsFileClose(fd);
+
+    return WIFI_SUCCESS;
+}
+
+static int ReadNetworkConfig(unsigned char *buf, unsigned int len)
+{
+    int fd;
+    unsigned int fileLen = 0;
+    int ret;
+    bool isFileExist = false;
+
+    if (buf == NULL) {
+        return ERROR_WIFI_UNKNOWN;
+    }
+
+    if (IsFileExist(WIFI_FILE) == true) {
+        isFileExist = true;
+        g_isNetworkConfigExist = WIFI_FILE_EXIST;
+    } else {
+        g_isNetworkConfigExist = WIFI_FILE_UNEXIST;
+    }
+
+    fd = UtilsFileOpen(WIFI_FILE, O_RDWR_FS | O_CREAT_FS, 0);
+    if (fd < 0) {
+        return ERROR_WIFI_UNKNOWN;
+    }
+    ret = UtilsFileStat(WIFI_FILE, &fileLen);
+    if (ret != WIFI_SUCCESS) {
+        UtilsFileClose(fd);
+        return ERROR_WIFI_UNKNOWN;
+    }
+
+    ret = UtilsFileSeek(fd, 0, SEEK_SET_FS);
+    if (ret != WIFI_SUCCESS) {
+        UtilsFileClose(fd);
+        return ERROR_WIFI_UNKNOWN;
+    }
+    if (fileLen > len) {
+        UtilsFileClose(fd);
+        return ERROR_WIFI_UNKNOWN;
+    }
+    if (isFileExist == true) {
+        ret = UtilsFileRead(fd, (char *)buf, len);
+        if (ret < 0) {
+            UtilsFileClose(fd);
+            return ERROR_WIFI_UNKNOWN;
+        }
+    }
+    UtilsFileClose(fd);
+    return WIFI_SUCCESS;
+}
 
 static void DispatchScanStateChangeEvent(const hi_wifi_event* hisiEvent,
     const WifiEvent* hosEvent, WifiEventState event)
@@ -79,12 +168,12 @@ static void StaSetLocaladdr(const struct netif *netif, int gw, int ipaddr, int n
 
 static void StaSetDNSServer(int switcher)
 {
-    ip_addr_t tmp_dns_ser[WIFI_MAX_DNS_NUM];
+    ip4_addr_t tmp_dns_ser[WIFI_MAX_DNS_NUM];
     for (int i = 0; i < WIFI_MAX_DNS_NUM; i++) {
         if (switcher == HI_WIFI_EVT_CONNECTED) {
-            ip_addr_set_ip4_u32(&tmp_dns_ser[i], g_wifiConfigs[g_networkId].staticIp.dnsServers[i]);
+            ip4_addr_set_u32(&tmp_dns_ser[i], g_wifiConfigs[g_networkId].staticIp.dnsServers[i]);
         } else {
-            ip_addr_set_ip4_u32(&tmp_dns_ser[i], 0);
+            ip4_addr_set_u32(&tmp_dns_ser[i], 0);
         }
         lwip_dns_setserver(i, &tmp_dns_ser[i]);
     }
@@ -564,6 +653,10 @@ WifiErrorCode AddDeviceConfig(const WifiDeviceConfig* config, int* result)
     }
 
     g_wifiConfigs[netId].netId = netId;
+    if (WriteNetworkConfig((unsigned char *)&g_wifiConfigs[netId], sizeof(WifiDeviceConfig)) != WIFI_SUCCESS) {
+        return ERROR_WIFI_UNKNOWN;
+    }
+
     if (UnlockWifiGlobalLock() != WIFI_SUCCESS) {
         return ERROR_WIFI_UNKNOWN;
     }
@@ -573,7 +666,7 @@ WifiErrorCode AddDeviceConfig(const WifiDeviceConfig* config, int* result)
 
 WifiErrorCode GetDeviceConfigs(WifiDeviceConfig* result, unsigned int* size)
 {
-    if (result == NULL || size == NULL || *size == 0) {
+    if (result == NULL || size == NULL) {
         return ERROR_WIFI_INVALID_ARGS;
     }
 
@@ -581,6 +674,16 @@ WifiErrorCode GetDeviceConfigs(WifiDeviceConfig* result, unsigned int* size)
 
     if (LockWifiGlobalLock() != WIFI_SUCCESS) {
         return ERROR_WIFI_UNKNOWN;
+    }
+
+    if (g_networkConfigReadFlag == false) {
+        g_networkConfigReadFlag = true;
+        if (ReadNetworkConfig((unsigned char *)&g_wifiConfigs[0], sizeof(WifiDeviceConfig)) != WIFI_SUCCESS) {
+            return ERROR_WIFI_UNKNOWN;
+        }
+        if (g_isNetworkConfigExist == WIFI_FILE_UNEXIST) {
+            g_wifiConfigs[0].netId = WIFI_CONFIG_INVALID;
+        }
     }
 
     for (int i = 0; i < WIFI_MAX_CONFIG_SIZE; i++) {
@@ -730,6 +833,11 @@ WifiErrorCode RemoveDevice(int networkId)
         printf("[wifi_service]:removeDevice memset failed\n");
     }
     g_wifiConfigs[networkId].netId = WIFI_CONFIG_INVALID;
+
+    if (WriteNetworkConfig((unsigned char *)&g_wifiConfigs[networkId], sizeof(WifiDeviceConfig)) != WIFI_SUCCESS) {
+        return ERROR_WIFI_UNKNOWN;
+    }
+
     if (UnlockWifiGlobalLock() != WIFI_SUCCESS) {
         return ERROR_WIFI_UNKNOWN;
     }
