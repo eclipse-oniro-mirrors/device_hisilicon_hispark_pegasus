@@ -190,7 +190,7 @@ static void StaSetWifiNetConfig(int switcher)
     if (switcher == HI_WIFI_EVT_CONNECTED) {
         if (g_wifiConfigs[g_networkId].ipType == DHCP) {
             netifapi_dhcp_start(netif_node);
-        } else if (g_wifiConfigs[g_networkId].ipType == STATIC) {
+        } else if (g_wifiConfigs[g_networkId].ipType == STATIC_IP) {
             (void)netifapi_netif_set_link_up(netif_node);
             StaSetLocaladdr(netif_node, g_wifiConfigs[g_networkId].staticIp.gateway,
                 g_wifiConfigs[g_networkId].staticIp.ipAddress, g_wifiConfigs[g_networkId].staticIp.netmask);
@@ -201,7 +201,7 @@ static void StaSetWifiNetConfig(int switcher)
         if (g_wifiConfigs[g_networkId].ipType == DHCP) {
             netifapi_dhcp_stop(netif_node);
             StaSetLocaladdr(netif_node, 0, 0, 0);
-        } else if (g_wifiConfigs[g_networkId].ipType == STATIC) {
+        } else if (g_wifiConfigs[g_networkId].ipType == STATIC_IP) {
             (void)netifapi_netif_set_link_down(netif_node);
             (void)netifapi_netif_set_down(netif_node);
             StaSetLocaladdr(netif_node, 0, 0, 0);
