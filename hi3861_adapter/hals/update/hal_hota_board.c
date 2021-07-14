@@ -203,5 +203,5 @@ int HotaHalRebootAndCleanCache(void)
 
 int HotaHalCheckVersionValid(const char *currentVersion, const char *pkgVersion, unsigned int pkgVersionLength)
 {
-    return 1;
+    return (strncmp(currentVersion, pkgVersion, pkgVersionLength) == 0) ? 1 : 0;
 }
