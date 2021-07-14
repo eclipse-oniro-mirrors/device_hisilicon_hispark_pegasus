@@ -200,3 +200,8 @@ int HotaHalRebootAndCleanCache(void)
 {
     return OHOS_SUCCESS;
 }
+
+int HotaHalCheckVersionValid(const char *currentVersion, const char *pkgVersion, unsigned int pkgVersionLength)
+{
+    return 1;
+}
