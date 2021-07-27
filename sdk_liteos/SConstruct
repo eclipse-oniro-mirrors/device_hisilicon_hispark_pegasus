@@ -26,7 +26,7 @@ import sys
 import datetime
 import atexit
 from distutils import dir_util
-sys.path.append(os.path.join(os.getcwd(), 'build'))
+sys.path.insert(0,os.path.join(os.getcwd(), 'build'))
 from scripts import common_env
 from scripts import scons_utils
 from scripts import scons_app
