@@ -58,7 +58,7 @@ if common_env.log_output_flag == False:
 
 #Init environment
 env = Environment(ENV={'PATH':os.environ['PATH']},
-                  TARGET_PREFIX=env_cfg.target_name,)
+                  TARGET_PREFIX = env_cfg.target_name, tools=['mingw'])
 
 env_cfg.set_tools(env)
 env_cfg.set_environs(env)
