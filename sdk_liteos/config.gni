@@ -115,8 +115,7 @@ board_include_dirs = [
 ]
 
 # Board adapter dir for OHOS components.
-board_adapter_dir =
-    "${ohos_root_path}device/hisilicon/hispark_pegasus/hi3861_adapter"
+board_adapter_dir = "//device/hisilicon/hispark_pegasus/hi3861_adapter"
 
 # Sysroot path.
 board_configed_sysroot = ""
