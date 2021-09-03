@@ -34,6 +34,7 @@
 #include <time.h>
 #include <signal.h>
 #include <unistd.h>
+#include <los_hwi.h>
 #include <los_swtmr.h>
 #include <los_swtmr_pri.h>
 
@@ -170,6 +171,7 @@ int timer_settime(timer_t timerID, int flags,
                   const struct itimerspec *restrict value,
                   struct itimerspec *restrict oldValue)
 {
+    UINT32 intSave;
     UINT16 swtmrID = (UINT16)(UINTPTR)timerID;
     SWTMR_CTRL_S *swtmr = NULL;
     UINT32 interval, expiry, ret;
@@ -192,7 +194,6 @@ int timer_settime(timer_t timerID, int flags,
 
     expiry = OsTimeSpec2Tick(&value->it_value);
     interval = OsTimeSpec2Tick(&value->it_interval);
-
     /* if specified interval, it must be same with expiry due to the limitation of liteos-m */
     if (interval && interval != expiry) {
         errno = ENOTSUP;
@@ -209,13 +210,12 @@ int timer_settime(timer_t timerID, int flags,
         return -1;
     }
 
+    intSave = LOS_IntLock();
     swtmr = OS_SWT_FROM_SID(swtmrID);
-    ret = LOS_SwtmrModify(swtmrID, expiry, (interval ? LOS_SWTMR_MODE_PERIOD : LOS_SWTMR_MODE_NO_SELFDELETE),
-                          swtmr->pfnHandler, swtmr->uwArg);
-    if (ret != LOS_OK) {
-        errno = EINVAL;
-        return -1;
-    }
+    swtmr->ucMode = (interval ? LOS_SWTMR_MODE_PERIOD : LOS_SWTMR_MODE_NO_SELFDELETE);
+    swtmr->uwInterval = (interval ? interval : expiry);
+
+    LOS_IntRestore(intSave);
 
     if ((value->it_value.tv_sec == 0) && (value->it_value.tv_nsec == 0)) {
         /*
