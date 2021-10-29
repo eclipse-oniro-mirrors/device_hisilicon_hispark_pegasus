@@ -65,7 +65,7 @@ extern "C" {
  * @ingroup los_config
  * Maximum supported number of mutexes
  */
-#define LOSCFG_BASE_IPC_MUX_LIMIT_CONFIG                  32
+#define LOSCFG_BASE_IPC_MUX_LIMIT_CONFIG                  38
 
 /**
  * @ingroup los_config
